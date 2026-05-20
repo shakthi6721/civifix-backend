@@ -1,0 +1,121 @@
+"""Civifix FastAPI application"""
+import logging
+from datetime import datetime
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.core.config import settings
+from app.core.exceptions import (
+    civifix_exception_handler,
+    global_exception_handler,
+    duplicate_key_exception_handler,
+    CivifixException
+)
+from app.core.logger import setup_logging
+from app.schemas.common_schema import HealthCheckSchema
+from app.api.v1.auth_routes import router as auth_router
+from app.api.v1.admin_routes import router as admin_router
+
+# Setup logging
+setup_logging(settings.LOG_LEVEL)
+logger = logging.getLogger(__name__)
+
+# Create FastAPI app
+app = FastAPI(
+    title="Civifix API",
+    description="Tamil Nadu Complaint Management Platform",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc"
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Exception handlers
+app.add_exception_handler(CivifixException, civifix_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
+
+# Include routers
+app.include_router(
+    auth_router,
+    prefix="/api/v1/auth",
+    tags=["Authentication"]
+)
+
+app.include_router(
+    admin_router,
+    prefix="/api/v1/admin",
+    tags=["Admin Management"]
+)
+
+
+# =========================
+# HEALTH CHECK ENDPOINTS
+# =========================
+
+@app.get("/", summary="Root endpoint")
+async def root():
+    """Root endpoint"""
+    return {
+        "success": True,
+        "message": "Civifix Backend Running",
+        "version": "1.0.0"
+    }
+
+
+@app.get(
+    "/health",
+    summary="Health check",
+    response_model=HealthCheckSchema
+)
+async def health_check():
+    """Health check endpoint"""
+    return HealthCheckSchema(timestamp=datetime.utcnow())
+
+
+@app.get("/api/health", summary="API health check")
+async def api_health_check():
+    """API health check"""
+    return {
+        "status": "healthy",
+        "service": "Civifix API",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+# =========================
+# STARTUP AND SHUTDOWN EVENTS
+# =========================
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize app on startup"""
+    logger.info("=" * 50)
+    logger.info("Civifix Backend Starting")
+    logger.info(f"Environment: {settings.ENV}")
+    logger.info(f"Database: {settings.DATABASE_NAME}")
+    logger.info("=" * 50)
+    
+    # Initialize default roles
+    from app.services.role_service import RoleService
+    await RoleService.create_default_roles()
+    logger.info("Default roles initialized")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    logger.info("Civifix Backend Shutting Down")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
