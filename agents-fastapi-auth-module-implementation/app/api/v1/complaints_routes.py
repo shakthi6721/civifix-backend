@@ -51,7 +51,7 @@ async def create_complaint(
     try:
         result = await service.create_complaint(
             complaint_data,
-            current_user["_id"],
+            current_user["user_id"],
             current_user.get("role", "CITIZEN")
         )
         return SuccessResponse.create(
@@ -109,7 +109,7 @@ async def my_complaints(
     """Get current user's complaints"""
     try:
         result = await service.get_user_complaints(
-            current_user["_id"],
+            current_user["user_id"],
             page=page,
             limit=limit,
             status=status
@@ -144,7 +144,7 @@ async def assign_worker(
         result = await service.assign_worker(
             complaint_id,
             assignment_data,
-            current_user["_id"],
+            current_user["user_id"],
             current_user.get("role", "INSPECTOR")
         )
         return SuccessResponse.create(
@@ -177,7 +177,7 @@ async def submit_work(
         result = await service.submit_work(
             complaint_id,
             work_data,
-            current_user["_id"],
+            current_user["user_id"],
             current_user.get("role", "WORKER")
         )
         return SuccessResponse.create(
@@ -210,7 +210,7 @@ async def approve_complaint(
         result = await service.approve_complaint(
             complaint_id,
             approve_data,
-            current_user["_id"],
+            current_user["user_id"],
             current_user.get("role", "INSPECTOR")
         )
         return SuccessResponse.create(
@@ -243,7 +243,7 @@ async def reject_complaint(
         result = await service.reject_complaint(
             complaint_id,
             reject_data,
-            current_user["_id"],
+            current_user["user_id"],
             current_user.get("role", "INSPECTOR")
         )
         return SuccessResponse.create(
@@ -305,7 +305,7 @@ async def inspector_dashboard(
 ):
     """Get inspector dashboard stats"""
     try:
-        result = await service.get_inspector_dashboard(current_user["_id"])
+        result = await service.get_inspector_dashboard(current_user["user_id"])
         return SuccessResponse.create(
             data=result,
             message="Dashboard stats fetched successfully"

@@ -32,6 +32,11 @@ class UserRepository:
             return await cls.collection.find_one({"_id": ObjectId(user_id)})
         except Exception:
             return None
+
+    @classmethod
+    async def get_by_id(cls, user_id: str) -> Optional[dict]:
+        """Alias for find_by_id to support services expecting get_by_id"""
+        return await cls.find_by_id(user_id)
     
     @classmethod
     async def find_by_email(cls, email: str) -> Optional[dict]:

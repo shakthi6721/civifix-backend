@@ -23,7 +23,8 @@ router = APIRouter()
 def get_ward_service(db=Depends(get_database)):
     """Dependency for ward service"""
     ward_repo = WardRepository(db)
-    user_repo = UserRepository(db)
+        # UserRepository uses classmethods and does not require instantiation
+    user_repo = UserRepository
     return WardService(ward_repo, user_repo)
 
 
@@ -37,12 +38,12 @@ def get_ward_service(db=Depends(get_database)):
 async def create_ward(
     ward_data: WardCreateSchema,
     current_user: dict = Depends(get_current_user),
-    role_validated: bool = Depends(require_role(["DISTRICT_ADMIN"])),
+    role_validated: bool = Depends(require_role(["DISTRICT_ADMIN"])), # pyright: ignore[reportArgumentType]
     service: WardService = Depends(get_ward_service)
 ):
     """Create a new ward (DISTRICT_ADMIN only)"""
     try:
-        result = await service.create_ward(ward_data, current_user["_id"])
+        result = await service.create_ward(ward_data, current_user["user_id"])
         return SuccessResponse.create(
             data=result,
             message="Ward created successfully",

@@ -10,13 +10,21 @@ def require_role(*allowed_roles: str):
     async def role_checker(
         current_user: Dict[str, Any] = Depends(get_current_user)
     ) -> Dict[str, Any]:
-        
+        # Normalize allowed_roles: flatten nested iterables and stringify values
+        normalized: List[str] = []
+        for r in allowed_roles:
+            if isinstance(r, (list, tuple, set)):
+                for v in r:
+                    normalized.append(str(v))
+            else:
+                normalized.append(str(r))
+
         user_role = current_user.get("role")
-        
-        if user_role not in allowed_roles:
+
+        if str(user_role) not in normalized:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"This action requires one of these roles: {', '.join(allowed_roles)}"
+                detail=f"This action requires one of these roles: {', '.join(normalized)}"
             )
         
         return current_user
