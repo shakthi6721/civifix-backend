@@ -21,6 +21,7 @@ from app.services.role_service import RoleService
 from app.repositories.user_repository import UserRepository
 from app.models.user_model import admin_user_document
 from app.db.mongodb import db
+from app.utils.helpers import serialize_mongo_documents
 
 router = APIRouter()
 
@@ -134,8 +135,8 @@ async def get_users(
                 users = []
         else:
             users = await UserService.get_district_users(
-                user_district,
-                user_district,
+                user_district, # type: ignore
+                user_district, # pyright: ignore[reportArgumentType]
                 skip,
                 limit
             )
@@ -294,7 +295,7 @@ async def create_role(
     name: str,
     description: str,
     permissions: List[str],
-    district: str = None,
+    district: str = None, # pyright: ignore[reportArgumentType]
     current_user: Dict[str, Any] = Depends(get_current_super_admin)
 ):
     """Create a custom role"""
@@ -332,6 +333,7 @@ async def get_roles(
     try:
         from app.repositories.role_repository import RoleRepository
         roles = await RoleRepository.get_all_roles()
+        roles = serialize_mongo_documents(roles)
         
         return ResponseHandler.success(
             message="Roles retrieved",

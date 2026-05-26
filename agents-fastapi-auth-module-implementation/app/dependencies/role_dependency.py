@@ -37,7 +37,7 @@ def require_permission(required_permission: str):
         if required_permission not in user_permissions:
             # Try to check role-based permissions
             has_permission = await RoleService.check_permission(
-                user_role,
+                user_role, # type: ignore
                 required_permission
             )
             

@@ -141,6 +141,29 @@ class ValidationException(CivifixException):
         self.errors = errors
 
 
+ValidationError = ValidationException
+
+
+class ResourceNotFoundError(CivifixException):
+    """Raised when a requested resource is not found"""
+    def __init__(self, message: str = "Resource not found"):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_404_NOT_FOUND,
+            error_code="RESOURCE_NOT_FOUND"
+        )
+
+
+class UnauthorizedError(CivifixException):
+    """Raised when action is unauthorized"""
+    def __init__(self, message: str = "Unauthorized action"):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_403_FORBIDDEN,
+            error_code="UNAUTHORIZED_ACTION"
+        )
+
+
 class DistrictAccessException(CivifixException):
     """Raised when accessing another district's resources"""
     def __init__(self, message: str = "Cannot access resources from another district"):

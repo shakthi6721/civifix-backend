@@ -16,6 +16,9 @@ from app.core.logger import setup_logging
 from app.schemas.common_schema import HealthCheckSchema
 from app.api.v1.auth_routes import router as auth_router
 from app.api.v1.admin_routes import router as admin_router
+from app.api.v1.wards_routes import router as wards_router
+from app.api.v1.complaints_routes import router as complaints_router
+from app.db.indexes import create_indexes
 
 # Setup logging
 setup_logging(settings.LOG_LEVEL)
@@ -54,6 +57,18 @@ app.include_router(
     admin_router,
     prefix="/api/v1/admin",
     tags=["Admin Management"]
+)
+
+app.include_router(
+    wards_router,
+    prefix="/api/v1/wards",
+    tags=["Ward Management"]
+)
+
+app.include_router(
+    complaints_router,
+    prefix="/api/v1/complaints",
+    tags=["Complaint Management"]
 )
 
 
@@ -108,6 +123,12 @@ async def startup_event():
     from app.services.role_service import RoleService
     await RoleService.create_default_roles()
     logger.info("Default roles initialized")
+    
+    # Create MongoDB indexes
+    from app.db.mongodb import get_database # pyright: ignore[reportAttributeAccessIssue]
+    db = await get_database()
+    await create_indexes(db)
+    logger.info("MongoDB indexes created")
 
 
 @app.on_event("shutdown")

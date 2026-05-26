@@ -119,7 +119,7 @@
 - [x] POST /api/v1/admin/roles (create custom role)
 - [x] GET /api/v1/admin/roles (list roles)
 
-### Utility Endpoints
+### Utility Endpoints   
 - [x] GET / (root endpoint)
 - [x] GET /health (health check)
 - [x] GET /api/health (API health check)

@@ -1,47 +1,64 @@
-"""MongoDB indexes setup"""
+"""MongoDB indexes for performance optimization"""
+from motor.motor_asyncio import AsyncIOMotorDatabase
 import logging
-from app.db.mongodb import db
 
 logger = logging.getLogger(__name__)
 
 
-async def create_indexes():
+async def create_indexes(db: AsyncIOMotorDatabase):
     """Create all necessary MongoDB indexes"""
-    
     try:
-        # Users collection indexes
-        await db.users.create_index("email", unique=True)
-        await db.users.create_index("mobile_number", unique=True)
-        await db.users.create_index("district")
-        await db.users.create_index("role")
-        await db.users.create_index("status")
-        await db.users.create_index("created_at")
+        # User indexes
+        await db["users"].create_index("mobile_number", unique=True)
+        await db["users"].create_index("email", unique=True, sparse=True)
+        await db["users"].create_index("role")
+        await db["users"].create_index("district")
+        await db["users"].create_index("is_active")
         
-        # OTP logs indexes
-        await db.otp_logs.create_index("identifier")
-        await db.otp_logs.create_index("created_at", expireAfterSeconds=604800)  # 7 days
+        # District indexes
+        await db["districts"].create_index("code", unique=True)
+        await db["districts"].create_index("is_active")
         
-        # Roles collection indexes
-        await db.roles.create_index("name", unique=True)
-        await db.roles.create_index("district")
+        # Ward indexes
+        await db["wards"].create_index("district_id")
+        await db["wards"].create_index("inspector_id")
+        await db["wards"].create_index([("district_id", 1), ("ward_number", 1)], unique=True)
+        await db["wards"].create_index("is_active")
         
-        # Permissions collection indexes
-        await db.permissions.create_index("name", unique=True)
-        await db.permissions.create_index("category")
+        # Complaint indexes - CRITICAL for performance
+        await db["complaints"].create_index("complaint_id", unique=True)
+        await db["complaints"].create_index("user_id")
+        await db["complaints"].create_index("ward_id")
+        await db["complaints"].create_index("district_id")
+        await db["complaints"].create_index("inspector_id")
+        await db["complaints"].create_index("worker_id")
+        await db["complaints"].create_index("status")
+        await db["complaints"].create_index("complaint_type")
+        await db["complaints"].create_index("priority")
+        await db["complaints"].create_index("created_at")
+        await db["complaints"].create_index([("created_at", -1)])
+        await db["complaints"].create_index([("status", 1), ("created_at", -1)])
+        await db["complaints"].create_index([("ward_id", 1), ("status", 1)])
+        await db["complaints"].create_index([("inspector_id", 1), ("status", 1)])
+        await db["complaints"].create_index([("user_id", 1), ("created_at", -1)])
         
-        # Refresh tokens indexes
-        await db.refresh_tokens.create_index("user_id")
-        await db.refresh_tokens.create_index("expires_at", expireAfterSeconds=0)
+        # Geospatial index for location-based queries
+        await db["complaints"].create_index([("location", "2dsphere")], sparse=True)
         
-        # Complaints collection indexes
-        await db.complaints.create_index("citizen_id")
-        await db.complaints.create_index("district")
-        await db.complaints.create_index("inspector_id")
-        await db.complaints.create_index("status")
-        await db.complaints.create_index("created_at")
+        # Complaint history indexes
+        await db["complaint_history"].create_index("complaint_id")
+        await db["complaint_history"].create_index("performed_by")
+        await db["complaint_history"].create_index("timestamp")
+        await db["complaint_history"].create_index([("complaint_id", 1), ("timestamp", -1)])
         
-        logger.info("MongoDB indexes created successfully")
+        # Notification indexes
+        await db["notifications"].create_index("user_id")
+        await db["notifications"].create_index("complaint_id")
+        await db["notifications"].create_index("status")
+        await db["notifications"].create_index("created_at")
+        
+        logger.info("All MongoDB indexes created successfully")
         
     except Exception as e:
-        logger.error(f"Failed to create indexes: {str(e)}")
+        logger.error(f"Error creating indexes: {str(e)}")
         raise

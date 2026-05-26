@@ -6,3 +6,8 @@ client = AsyncIOMotorClient(
 )
 
 db = client[settings.DATABASE_NAME]
+
+
+async def get_database():
+    """Return the MongoDB database instance"""
+    return db
