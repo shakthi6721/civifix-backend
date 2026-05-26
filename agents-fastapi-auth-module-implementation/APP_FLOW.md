@@ -87,7 +87,60 @@ Service path:
   - updates last login timestamp
   - returns new tokens and role/district metadata
 
-## 3. Ward Management Flow
+## 3. District Management Flow
+
+District management is a SUPER_ADMIN responsibility that defines the districts available for wards, users, and complaints.
+
+### Key District Endpoints
+
+- `POST /api/v1/admin/districts` — create a new district
+- `GET /api/v1/admin/districts` — list all districts
+- `GET /api/v1/admin/districts/{district_id}` — get district details
+- `PATCH /api/v1/admin/districts/{district_id}` — update district details
+- `PATCH /api/v1/admin/districts/{district_id}/activate` — activate a district
+- `PATCH /api/v1/admin/districts/{district_id}/deactivate` — deactivate a district
+- `DELETE /api/v1/admin/districts/{district_id}` — delete a district
+
+### Role
+
+- `SUPER_ADMIN` is the authorized role for district creation, update, activation, deactivation, and deletion.
+
+### District document fields
+
+Districts are stored with fields such as:
+
+- `name`
+- `code`
+- `state`
+- `email`
+- `phone`
+- `address`
+- `is_active`
+- `created_by`
+- `created_at`
+- `updated_at`
+
+### Service logic
+
+`DistrictService` validates:
+
+- uniqueness of district `code`
+- uniqueness of district `name`
+- district creation and update payloads
+- district status changes via activate/deactivate
+
+When a district is created, it is saved through `DistrictRepository` and returned as a JSON-safe document.
+
+### Implementation path
+
+- `app/api/v1/districts_routes.py` — district route definitions
+- `app/services/district_service.py` — district business logic
+- `app/repositories/district_repository.py` — MongoDB district CRUD
+- `app/models/district_model.py` — district document shape
+- `app/schemas/district_schema.py` — validation schemas
+- `app/main.py` — registers the district router
+
+## 4. Ward Management Flow
 
 Ward management is used by district-level administration to organize inspectors and local areas.
 
@@ -117,7 +170,7 @@ Ward management is used by district-level administration to organize inspectors 
 
 When a ward is created or updated, it is saved through `WardRepository` and formatted for API responses.
 
-## 4. Complaint Lifecycle
+## 5. Complaint Lifecycle
 
 The complaint workflow is the core of the app. It is split into roles and status transitions.
 
@@ -131,7 +184,7 @@ Defined in `ComplaintStatus`:
 - `CLOSED`
 - `REJECTED`
 
-### 4.1 Complaint creation
+### 5.1 Complaint creation
 
 Endpoint: `POST /api/v1/complaints`
 
@@ -154,7 +207,7 @@ Service path:
   - updates ward stats
   - notifies inspector
 
-### 4.2 Inspector assignment
+### 5.2 Inspector assignment
 
 Endpoint: `PUT /api/v1/complaints/{complaint_id}/assign-worker`
 
@@ -165,7 +218,7 @@ Endpoint: `PUT /api/v1/complaints/{complaint_id}/assign-worker`
 - Adds a history entry: `ASSIGNED`.
 - Sends a notification to the assigned worker.
 
-### 4.3 Worker submits completion
+### 5.3 Worker submits completion
 
 Endpoint: `PUT /api/v1/complaints/{complaint_id}/submit-work`
 
@@ -177,7 +230,7 @@ Endpoint: `PUT /api/v1/complaints/{complaint_id}/submit-work`
 - Adds a history entry: `STATUS_CHANGED`.
 - Notifies the inspector.
 
-### 4.4 Inspector approves completion
+### 5.4 Inspector approves completion
 
 Endpoint: `PUT /api/v1/complaints/{complaint_id}/approve`
 
@@ -189,7 +242,7 @@ Endpoint: `PUT /api/v1/complaints/{complaint_id}/approve`
 - Updates ward complaint counts for closed complaints.
 - Optionally notifies citizen and worker.
 
-### 4.5 Inspector rejects completion
+### 5.5 Inspector rejects completion
 
 Endpoint: `PUT /api/v1/complaints/{complaint_id}/reject`
 
@@ -200,7 +253,7 @@ Endpoint: `PUT /api/v1/complaints/{complaint_id}/reject`
 - Adds a history entry `REJECTED`.
 - Notifies the worker to continue work.
 
-### 4.6 Complaint viewing and dashboards
+### 5.6 Complaint viewing and dashboards
 
 Citizen and other authenticated users can view:
 
@@ -209,7 +262,7 @@ Citizen and other authenticated users can view:
 - `GET /api/v1/complaints/ward/{ward_id}` — complaints by ward.
 - `GET /api/v1/complaints/inspector/dashboard` — inspector dashboard stats.
 
-## 5. Notification and audit support
+## 6. Notification and audit support
 
 `ComplaintService` records history for actions including:
 
@@ -227,7 +280,7 @@ Notifications are triggered during:
 - complaint approval
 - complaint rejection
 
-## 6. Final flow summary
+## 7. Final flow summary
 
 1. Citizen registers via `POST /api/v1/auth/register`.
 2. Citizen verifies OTP via `POST /api/v1/auth/verify-otp` and obtains JWT tokens.
@@ -240,7 +293,7 @@ Notifications are triggered during:
    - approves it, closing the complaint, or
    - rejects it, returning work to the worker.
 
-## 7. Key modules
+## 8. Key modules
 
 - `app/api/v1/auth_routes.py` — registration, OTP verification, login, token refresh.
 - `app/api/v1/wards_routes.py` — ward lifecycle management.

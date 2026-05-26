@@ -18,6 +18,7 @@ from app.api.v1.auth_routes import router as auth_router
 from app.api.v1.admin_routes import router as admin_router
 from app.api.v1.wards_routes import router as wards_router
 from app.api.v1.complaints_routes import router as complaints_router
+from app.api.v1.districts_routes import router as districts_router
 from app.db.indexes import create_indexes
 
 # Setup logging
@@ -69,6 +70,12 @@ app.include_router(
     complaints_router,
     prefix="/api/v1/complaints",
     tags=["Complaint Management"]
+)
+
+app.include_router(
+    districts_router,
+    prefix="/api/v1/admin",
+    tags=["District Management"]
 )
 
 
