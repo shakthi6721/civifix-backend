@@ -1,4 +1,5 @@
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 
 class ResponseHandler:
 
@@ -10,11 +11,11 @@ class ResponseHandler:
     ):
         return JSONResponse(
             status_code=status_code,
-            content={
+            content=jsonable_encoder({
                 "success": True,
                 "message": message,
                 "data": data
-            }
+            })
         )
 
     @staticmethod
@@ -25,11 +26,11 @@ class ResponseHandler:
     ):
         return JSONResponse(
             status_code=status_code,
-            content={
+            content=jsonable_encoder({
                 "success": False,
                 "message": message,
                 "errors": errors
-            }
+            })
         )
 
 class SuccessResponse:

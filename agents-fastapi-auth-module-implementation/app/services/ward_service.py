@@ -27,10 +27,10 @@ class WardService:
     ) -> dict:
         """Create a new ward with validations"""
         try:
-            # Validate district exists
+            district = None
             if self.district_repo:
-                district_exists = await self.district_repo.exists(ward_data.district_id)
-                if not district_exists:
+                district = await self.district_repo.find_by_id(ward_data.district_id)
+                if not district:
                     raise ValidationError("District not found")
 
             # Validate inspector exists and has correct role
@@ -38,13 +38,11 @@ class WardService:
                 inspector = await self.user_repo.get_by_id(ward_data.inspector_id)
                 if not inspector:
                     raise ValidationError("Inspector not found")
-                
+
                 if inspector.get("role") != "INSPECTOR":
                     raise ValidationError("User is not an inspector")
-                
-                # Validate inspector belongs to same district
-                if str(inspector.get("district")) != ward_data.district_id:
-                    raise ValidationError("Inspector must belong to the same district")
+
+                await self._validate_inspector_district(inspector, ward_data.district_id, district)
 
             # Check for duplicate ward number in district
             existing_ward = await self.ward_repo.get_by_ward_number(
@@ -75,6 +73,27 @@ class WardService:
             logger.error(f"Error creating ward: {str(e)}")
             raise CivifixException("Failed to create ward", status_code=500)
 
+    async def _validate_inspector_district(
+        self,
+        inspector: dict,
+        district_id: str,
+        district: Optional[dict] = None
+    ) -> None:
+        """Ensure inspector belongs to the requested district"""
+        inspector_district = inspector.get("district")
+        if inspector_district is None:
+            raise ValidationError("Inspector must belong to the same district")
+
+        if str(inspector_district) == district_id:
+            return
+
+        if district is not None:
+            district_name = str(district.get("name", ""))
+            if district_name and str(inspector_district).lower() == district_name.lower():
+                return
+
+        raise ValidationError("Inspector must belong to the same district")
+
     async def update_ward(
         self,
         ward_id: str,
@@ -92,9 +111,16 @@ class WardService:
                 inspector = await self.user_repo.get_by_id(update_data.inspector_id)
                 if not inspector:
                     raise ValidationError("Inspector not found")
-                
+
                 if inspector.get("role") != "INSPECTOR":
                     raise ValidationError("User is not an inspector")
+
+                district_id = str(ward.get("district_id"))
+                district = None
+                if self.district_repo:
+                    district = await self.district_repo.find_by_id(district_id)
+
+                await self._validate_inspector_district(inspector, district_id, district)
 
             # If changing ward name, validate for duplicates
             if update_data.ward_name:

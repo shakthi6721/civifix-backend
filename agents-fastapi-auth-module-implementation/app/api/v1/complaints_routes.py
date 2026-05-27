@@ -30,7 +30,8 @@ def get_complaint_service(db=Depends(get_database)):
     """Dependency for complaint service"""
     complaint_repo = ComplaintRepository(db)
     ward_repo = WardRepository(db)
-    user_repo = UserRepository(db)
+    # UserRepository uses classmethods and does not require instantiation
+    user_repo = UserRepository
     notification_service = NotificationService()
     return ComplaintService(complaint_repo, ward_repo, user_repo, notification_service)
 

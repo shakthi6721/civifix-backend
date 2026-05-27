@@ -12,6 +12,7 @@ from app.schemas.complaint_schema import (
 from app.services.ward_service import WardService
 from app.repositories.ward_repository import WardRepository
 from app.repositories.user_repository import UserRepository
+from app.repositories.district_repository import DistrictRepository
 from app.db.mongodb import get_database
 from app.dependencies.role_dependency import require_role
 
@@ -23,9 +24,10 @@ router = APIRouter()
 def get_ward_service(db=Depends(get_database)):
     """Dependency for ward service"""
     ward_repo = WardRepository(db)
-        # UserRepository uses classmethods and does not require instantiation
+    district_repo = DistrictRepository
+    # UserRepository uses classmethods and does not require instantiation
     user_repo = UserRepository
-    return WardService(ward_repo, user_repo)
+    return WardService(ward_repo, user_repo, district_repo)
 
 
 @router.post(
