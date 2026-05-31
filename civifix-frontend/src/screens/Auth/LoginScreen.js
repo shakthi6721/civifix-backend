@@ -68,7 +68,7 @@ export const LoginScreen = ({ navigation }) => {
           <View style={styles.logoWrap}>
             <View style={styles.logoBox}>
               <Image
-                source={require("/home/shak-cpm/civifix/civifix-backend.worktrees/civifix-frontend/assets/icon.png")}
+                source={require("../../../assets/icon.png")}
                 style={styles.logoImg}
                 resizeMode="contain"
               />
