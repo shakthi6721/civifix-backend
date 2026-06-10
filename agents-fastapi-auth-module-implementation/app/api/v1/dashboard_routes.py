@@ -36,7 +36,7 @@ async def get_dashboard_overview(
 ):
     """Get dashboard overview with statistics"""
     try:
-        stats = await service.get_dashboard_stats(current_user["user_id"])
+        stats = await service.get_dashboard_stats(current_user)
         return SuccessResponse.create(
             data={
                 "stats": stats,
@@ -66,7 +66,7 @@ async def get_recent_activities(
     """Get recent complaint activities"""
     try:
         activities = await service.get_recent_activities(
-            current_user["user_id"],
+            current_user,
             limit=limit
         )
         return SuccessResponse.create(
@@ -93,7 +93,7 @@ async def get_complaint_metrics(
 ):
     """Get complaint metrics by status"""
     try:
-        metrics = await service.get_complaints_metrics(current_user["user_id"])
+        metrics = await service.get_complaints_metrics(current_user)
         return SuccessResponse.create(
             data=metrics,
             message="Metrics fetched successfully"
@@ -118,9 +118,9 @@ async def get_dashboard_summary(
 ):
     """Get complete dashboard summary with stats, activities, and metrics"""
     try:
-        stats = await service.get_dashboard_stats(current_user["user_id"])
-        activities = await service.get_recent_activities(current_user["user_id"], limit=5)
-        metrics = await service.get_complaints_metrics(current_user["user_id"])
+        stats = await service.get_dashboard_stats(current_user)
+        activities = await service.get_recent_activities(current_user, limit=5)
+        metrics = await service.get_complaints_metrics(current_user)
 
         return SuccessResponse.create(
             data={

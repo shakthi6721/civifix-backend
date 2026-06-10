@@ -15,16 +15,29 @@ class DashboardService:
         self.db = db
         self.complaint_repo = ComplaintRepository(db)
 
-    async def get_dashboard_stats(self, user_id: str = None) -> Dict[str, Any]:
-        """Get dashboard statistics"""
+    async def get_dashboard_stats(self, current_user: dict = None) -> Dict[str, Any]:
+        """Get dashboard statistics (role-aware)"""
         try:
+            from bson import ObjectId
             complaints_collection = self.db["complaints"]
 
-            # Build query
+            # Build role-aware query
             query = {}
-            if user_id:
-                from bson import ObjectId
-                query["user_id"] = ObjectId(user_id)
+            if current_user:
+                role = current_user.get("role")
+                user_id = current_user.get("user_id")
+                district = current_user.get("district")
+
+                if role == "CITIZEN":
+                    query["user_id"] = ObjectId(user_id)
+                elif role == "INSPECTOR":
+                    query["inspector_id"] = ObjectId(user_id)
+                elif role == "WORKER":
+                    query["worker_id"] = ObjectId(user_id)
+                elif role == "DISTRICT_ADMIN":
+                    if district:
+                        query["district_id"] = ObjectId(district)
+                # SUPER_ADMIN and others have no extra filter
 
             # Get counts by status
             total = await complaints_collection.count_documents(query)
@@ -42,15 +55,27 @@ class DashboardService:
             logger.error(f"Error getting dashboard stats: {str(e)}")
             raise
 
-    async def get_recent_activities(self, user_id: str = None, limit: int = 10) -> Dict[str, Any]:
-        """Get recent activities/complaints"""
+    async def get_recent_activities(self, current_user: dict = None, limit: int = 10) -> Dict[str, Any]:
+        """Get recent activities/complaints (role-aware)"""
         try:
+            from bson import ObjectId
             complaints_collection = self.db["complaints"]
 
             query = {}
-            if user_id:
-                from bson import ObjectId
-                query["user_id"] = ObjectId(user_id)
+            if current_user:
+                role = current_user.get("role")
+                user_id = current_user.get("user_id")
+                district = current_user.get("district")
+
+                if role == "CITIZEN":
+                    query["user_id"] = ObjectId(user_id)
+                elif role == "INSPECTOR":
+                    query["inspector_id"] = ObjectId(user_id)
+                elif role == "WORKER":
+                    query["worker_id"] = ObjectId(user_id)
+                elif role == "DISTRICT_ADMIN":
+                    if district:
+                        query["district_id"] = ObjectId(district)
 
             complaints = await complaints_collection.find(query)\
                 .sort("created_at", -1)\
@@ -76,15 +101,27 @@ class DashboardService:
             logger.error(f"Error getting recent activities: {str(e)}")
             raise
 
-    async def get_complaints_metrics(self, user_id: str = None) -> Dict[str, Any]:
-        """Get complaint metrics by status"""
+    async def get_complaints_metrics(self, current_user: dict = None) -> Dict[str, Any]:
+        """Get complaint metrics by status (role-aware)"""
         try:
+            from bson import ObjectId
             complaints_collection = self.db["complaints"]
 
             query = {}
-            if user_id:
-                from bson import ObjectId
-                query["user_id"] = ObjectId(user_id)
+            if current_user:
+                role = current_user.get("role")
+                user_id = current_user.get("user_id")
+                district = current_user.get("district")
+
+                if role == "CITIZEN":
+                    query["user_id"] = ObjectId(user_id)
+                elif role == "INSPECTOR":
+                    query["inspector_id"] = ObjectId(user_id)
+                elif role == "WORKER":
+                    query["worker_id"] = ObjectId(user_id)
+                elif role == "DISTRICT_ADMIN":
+                    if district:
+                        query["district_id"] = ObjectId(district)
 
             total = await complaints_collection.count_documents(query)
 
